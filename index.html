@@ -232,24 +232,28 @@ function handleVerifyCode() {
   var btn = document.getElementById("btn-verify");
   if (btn) { btn.innerHTML = '<div class="spin"></div> Verificando...'; btn.disabled = true; }
 
-  sb.auth.verifyOtp({ email: S.email, token: code, type: "email" }).then(function(r) {
-    if (r.error) {
-      toast(r.error.message || "Codigo invalido", "err");
-      if (btn) { btn.textContent = "Verificar \u2192"; btn.disabled = false; }
-      return;
-    }
-    S.user = r.data.user;
-    fetchProfile().then(function() {
-      if (!S.profile || !S.profile.name) {
-        S.step = 3;
-        render();
+  // No handleVerifyCode(), após login bem-sucedido:
+sb.auth.verifyOtp({ email: S.email, token: code, type: "email" }).then(function(r) {
+  if (r.error) {
+    toast(r.error.message || "Codigo invalido", "err");
+    return;
+  }
+  S.user = r.data.user;
+  fetchProfile().then(function() {
+    if (!S.profile || !S.profile.name) {
+      S.step = 3;
+      render();
+    } else {
+      toast("Bem-vindo, " + S.profile.name + "! 🌟");
+      // REDIRECIONA CONFORME O PAPEL
+      if (S.profile.role === "merchant") {
+        go("#/merchant");
       } else {
-        toast("Bem-vindo, " + S.profile.name + "! \uD83C\uDF1F");
         go("#/");
       }
-    });
+    }
   });
-}
+});
 
 function handleComplete() {
   var name = ((document.getElementById("in-name") || {}).value) || "";
@@ -366,18 +370,22 @@ function renderSetup() {
 }
 
 // ======================== LOGIN PAGE ========================
+// ======================== ROLE SELECTION (Step 3) ========================
+// Substitua o renderLogin() step 3 (quando profile.name está vazio)
+
 function renderLogin() {
   var st = S.step;
   var h = '<div class="page fc ai jc" style="min-height:100dvh;padding-top:40px">';
   h += '<div style="position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);width:300px;height:300px;background:rgba(108,60,225,.15);border-radius:50%;filter:blur(80px);pointer-events:none"></div>';
   h += '<div class="tc mb6" style="position:relative;z-index:1">';
-  h += '<div class="logo-i mxa" style="width:72px;height:72px;border-radius:20px;font-size:36px">\uD83C\uDF1F</div>';
+  h += '<div class="logo-i mxa" style="width:72px;height:72px;border-radius:20px;font-size:36px">🌟</div>';
   h += '<h1 class="t28 fb mt3">Glow</h1>';
   h += '<p class="c-dim t13 mt2">Ganhe dinheiro divulgando negocios locais</p>';
   h += '</div>';
   h += '<div class="w100" style="max-width:360px;position:relative;z-index:1">';
 
   if (st === 1) {
+    // Google + Email
     h += '<button class="btn btn-google" onclick="loginGoogle()">';
     h += '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Entrar com Google</button>';
     h += '<div class="divider">ou</div>';
@@ -385,47 +393,78 @@ function renderLogin() {
     h += '<button class="btn btn-pri" id="btn-send" onclick="handleSendCode()">Receber codigo</button>';
     h += '<p class="c-dim t11 tc mt3">Sem senha! So seu email</p>';
   } else if (st === 2) {
-    h += '<div class="tc mb4"><div class="t36">\uD83D\uDCEC</div><p class="c-dim t13 mt2">Codigo enviado para<br><strong style="color:var(--txt)">' + esc(S.email) + '</strong></p></div>';
+    // OTP Code
+    h += '<div class="tc mb4"><div class="t36">📬</div><p class="c-dim t13 mt2">Codigo enviado para<br><strong style="color:var(--txt)">' + esc(S.email) + '</strong></p></div>';
     h += '<div class="fg"><label class="fl">Codigo de verificacao</label><input class="fi tc mono" style="font-size:28px;letter-spacing:8px" placeholder="000000" id="in-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"></div>';
     h += '<button class="btn btn-pri" id="btn-verify" onclick="handleVerifyCode()">Verificar</button>';
     h += '<div class="f g2 mt2"><button class="btn btn-ghost" onclick="handleSendCode()">Reenviar</button><button class="btn btn-ghost" onclick="S.step=1;render()">Trocar email</button></div>';
-  } else {
-    h += '<div class="tc mb4"><div class="t36">\uD83D\uDC4B</div><p class="c-dim t13 mt2">Quase la! Complete seu perfil:</p></div>';
-    h += '<div class="fg"><label class="fl">Como quer ser chamado?</label><input class="fi tc t18" placeholder="Seu nome ou apelido" id="in-name" maxlength="30" value="' + esc(S.name) + '"></div>';
-    h += '<button class="btn btn-pri t18" onclick="handleComplete()">Comecar a ganhar!</button>';
+  } else if (st === 3) {
+    // Nome + Role Selection
+    h += '<div class="tc mb4"><div class="t36">👋</div><p class="c-dim t13 mt2">Bem-vindo! Configure seu perfil:</p></div>';
+    h += '<div class="fg"><label class="fl">Seu nome</label><input class="fi tc t18" placeholder="Como quer ser chamado?" id="in-name" maxlength="30" value="' + esc(S.name) + '"></div>';
+    h += '<div class="fg"><label class="fl">Como vai usar o Glow?</label>';
+    h += '<div class="f fc g2">';
+    h += '<div class="card pointer" id="role-creator" onclick="selectRole(\'resident\')" style="border:2px solid var(--pri);padding:16px"><div class="f ai g3"><div class="t36">📱</div><div><div class="fb t13">Quero ganhar divulgando</div><div class="c-dim t11">Publique negocios locais e ganhe dinheiro</div></div></div></div>';
+    h += '<div class="card pointer" id="role-merchant" onclick="selectRole(\'merchant\')" style="padding:16px"><div class="f ai g3"><div class="t36">🏪</div><div><div class="fb t13">Tenho um negocio</div><div class="c-dim t11">Divulgue sua empresa com criadores locais</div></div></div></div>';
+    h += '</div></div>';
+    h += '<button class="btn btn-pri t18" onclick="handleComplete()">Comecar!</button>';
   }
 
   h += '</div>';
-  h += '<div class="f g4 c-dim t11 mt8"><span>Seguro</span><span>Rapido</span><span>Pix</span></div>';
+  h += '<div class="f g4 c-dim t11 mt8"><span>🔒 Seguro</span><span>⚡ Rapido</span><span>💰 Pix</span></div>';
   h += '</div>';
   return h;
 }
 
-// ======================== TOP BAR ========================
-function topBar(title) {
-  var isHome = location.hash === "#/" || location.hash === "";
-  if (isHome) {
-    var initial = (S.profile && S.profile.name ? S.profile.name.charAt(0) : "U");
-    return '<div class="topbar"><div class="logo"><div class="logo-i">\uD83C\uDF1F</div><div class="logo-t">Glow</div></div>' +
-      '<div class="f g2 ai">' +
-      '<button onclick="go(\'#/notifications\')" style="font-size:20px;padding:4px">\uD83D\uDD14</button>' +
-      '<button onclick="go(\'#/profile\')" class="rounded-full" style="width:34px;height:34px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">' + esc(initial) + '</button>' +
-      '</div></div>';
-  }
-  return '<div class="topbar"><button onclick="history.back()" class="topbar-back">\u2190 <span class="fs">' + esc(title || "Voltar") + '</span></button>' +
-    '<button onclick="go(\'#/notifications\')" style="font-size:20px;padding:4px">\uD83D\uDD14</button></div>';
+var selectedRole = "resident";
+
+function selectRole(role) {
+  selectedRole = role;
+  var cr = document.getElementById("role-creator");
+  var mr = document.getElementById("role-merchant");
+  if (cr) cr.style.borderColor = role === "resident" ? "var(--pri)" : "var(--border)";
+  if (mr) mr.style.borderColor = role === "merchant" ? "var(--pri)" : "var(--border)";
+}
+
+function handleComplete() {
+  var name = ((document.getElementById("in-name") || {}).value) || "";
+  if (!name.trim()) { toast("Digite seu nome", "err"); return; }
+  S.name = name;
+  saveProfile({ name: name, role: selectedRole }).then(function() {
+    toast("Bem-vindo, " + name + "! 🌟");
+    if (selectedRole === "merchant") {
+      go("#/merchant");
+    } else {
+      go("#/");
+    }
+  });
 }
 
 // ======================== BOTTOM NAV ========================
 function bottomNav() {
   var hash = location.hash || "#/";
-  var items = [
-    { r: "#/", i: "\uD83C\uDFE0", l: "Feed", on: hash === "#/" || hash.indexOf("#/campaign") === 0 },
-    { r: "#/wallet", i: "\uD83D\uDCB0", l: "Ganhos", on: hash === "#/wallet" },
-    { r: "#/merchant/campaigns/new", i: "\u2795", l: "", center: true },
-    { r: "#/ranking", i: "\uD83C\uDFC6", l: "Ranking", on: hash === "#/ranking" },
-    { r: "#/profile", i: "\uD83D\uDC64", l: "Perfil", on: hash === "#/profile" || hash.indexOf("#/merchant") === 0 }
-  ];
+  var isMerchant = S.profile && S.profile.role === "merchant";
+
+  if (isMerchant) {
+    // NAV DO LOJISTA
+    var items = [
+      { r: "#/merchant", i: "📊", l: "Painel", on: hash === "#/merchant" },
+      { r: "#/merchant/campaigns", i: "📢", l: "Campanhas", on: hash.indexOf("#/merchant/campaigns") === 0 },
+      { r: "#/merchant/campaigns/new", i: "➕", l: "", center: true },
+      { r: "#/merchant/validations", i: "✅", l: "Validar", on: hash.indexOf("#/merchant/validations") === 0 },
+      { r: "#/profile", i: "👤", l: "Perfil", on: hash === "#/profile" }
+    ];
+  } else {
+    // NAV DO CRIADOR
+    var items = [
+      { r: "#/", i: "🏠", l: "Feed", on: hash === "#/" || hash.indexOf("#/campaign") === 0 },
+      { r: "#/wallet", i: "💰", l: "Ganhos", on: hash === "#/wallet" },
+      { r: "#/ranking", i: "🏆", l: "Ranking", on: hash === "#/ranking" },
+      { r: "#/my-posts", i: "📝", l: "Posts", on: hash === "#/my-posts" },
+      { r: "#/profile", i: "👤", l: "Perfil", on: hash === "#/profile" }
+    ];
+  }
+
   var h = '<div class="nav-bottom">';
   items.forEach(function(item) {
     if (item.center) {
@@ -819,33 +858,41 @@ function loadRanking() {
 // ======================== PROFILE ========================
 function renderProfile() {
   var p = S.profile || {};
-  var initial = (p.name || "U").charAt(0);
-  var avatarHTML = p.avatar_url
-    ? '<img src="' + esc(p.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-cover">'
-    : esc(initial);
-
+  var isMerchant = p.role === "merchant";
   var h = topBar("Perfil") + '<div class="page">';
+
+  // Avatar + Nome
   h += '<div class="tc mb6">';
-  h += '<div class="rounded-full mxa" style="width:88px;height:88px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;border:3px solid rgba(108,60,225,.3)">' + avatarHTML + '</div>';
+  h += '<div class="rounded-full mxa" style="width:88px;height:88px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;border:3px solid rgba(108,60,225,.3)">';
+  h += p.avatar_url ? '<img src="' + esc(p.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-cover">' : esc((p.name || "U").charAt(0));
+  h += '</div>';
   h += '<h2 class="t22 fb mt3">' + esc(p.name || "Usuario") + '</h2>';
   h += '<p class="c-dim t13">' + esc(p.email || (S.user && S.user.email) || "") + '</p>';
+  h += '<span class="badge ' + (isMerchant ? "b-pri" : "b-ok") + ' mt2">' + (isMerchant ? "🏪 Lojista" : "📱 Criador") + '</span>';
   h += '</div>';
 
-  h += '<div class="stat-grid mb6">';
-  h += '<div class="stat-box"><div class="stat-n c-pri">\uD83D\uDCDD</div><div class="stat-l">Meus Posts</div><button onclick="go(\'#/my-posts\')" style="background:none;color:var(--pri);font-size:11px" class="mt1">Ver</button></div>';
-  h += '<div class="stat-box"><div class="stat-n c-ok">' + money(p.total_earned || 0) + '</div><div class="stat-l">Ganho Total</div></div>';
-  h += '<div class="stat-box"><div class="stat-n c-acc">\uD83D\uDCB0</div><div class="stat-l">Carteira</div><button onclick="go(\'#/wallet\')" style="background:none;color:var(--acc);font-size:11px" class="mt1">Ver</button></div>';
-  h += '</div>';
+  if (isMerchant) {
+    // PERFIL DO LOJISTA
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📊</div><div class="f1" style="text-align:left"><div class="fm t13">Dashboard</div><div class="c-dim t11">Visao geral do negocio</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/campaigns\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📢</div><div class="f1" style="text-align:left"><div class="fm t13">Minhas Campanhas</div><div class="c-dim t11">Gerencie suas campanhas</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/validations\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">✅</div><div class="f1" style="text-align:left"><div class="fm t13">Validar Posts</div><div class="c-dim t11">Aprovar ou rejeitar comprovacoes</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/register\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏪</div><div class="f1" style="text-align:left"><div class="fm t13">Dados da Empresa</div><div class="c-dim t11">Editar informacoes</div></div><span class="c-dim">→</span></button>';
+  } else {
+    // PERFIL DO CRIADOR
+    h += '<div class="stat-grid mb4">';
+    h += '<div class="stat-box"><div class="stat-n c-pri">📝</div><div class="stat-l">Meus Posts</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-ok">' + money(p.total_earned || 0) + '</div><div class="stat-l">Ganho Total</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-acc">💰</div><div class="stat-l">Carteira</div></div>';
+    h += '</div>';
 
-  h += '<div class="card mb3"><div class="f jb mb3"><h3 class="fb">Meu Perfil</h3><button class="btn btn-sec btn-sm" onclick="openEditProfile()">Editar</button></div>';
-  h += '<div class="f ai g3 mb2"><span class="c-dim t11">\uD83D\uDCCD</span><span class="t13">' + (p.city ? esc(p.city) + ", " + esc(p.state || "") : "Nao informado") + '</span></div>';
-  h += '<div class="f ai g3 mb2"><span class="c-dim t11">\uD83D\uDCF7</span><span class="t13">' + (p.instagram_handle ? "@" + esc(p.instagram_handle) : "Nao informado") + '</span></div>';
-  h += '<div class="f ai g3"><span class="c-dim t11">\uD83C\uDFB5</span><span class="t13">' + (p.tiktok_handle ? "@" + esc(p.tiktok_handle) : "Nao informado") + '</span></div>';
-  h += '</div>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/wallet\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">💰</div><div class="f1" style="text-align:left"><div class="fm t13">Carteira</div><div class="c-dim t11">Saldo, saques e transacoes</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/my-posts\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📝</div><div class="f1" style="text-align:left"><div class="fm t13">Meus Posts</div><div class="c-dim t11">Historico de participacoes</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/ranking\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏆</div><div class="f1" style="text-align:left"><div class="fm t13">Ranking</div><div class="c-dim t11">Compare com outros criadores</div></div><span class="c-dim">→</span></button>';
+    h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,152,0,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏪</div><div class="f1" style="text-align:left"><div class="fm t13">Sou Lojista</div><div class="c-dim t11">Tenho um negocio para divulgar</div></div><span class="c-dim">→</span></button>';
+  }
 
-  h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')" style="cursor:pointer"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83C\uDFEA</div><div class="f1" style="text-align:left"><div class="fm t13">Painel do Lojista</div><div class="c-dim t11">Gerencie campanhas</div></div><span class="c-dim">\u2192</span></button>';
-  h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/notifications\')" style="cursor:pointer"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDD14</div><div class="f1" style="text-align:left"><div class="fm t13">Notificacoes</div><div class="c-dim t11">Alertas e atualizacoes</div></div><span class="c-dim">\u2192</span></button>';
-  h += '<button class="card f ai g3 w100" onclick="logout()" style="cursor:pointer"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,71,87,.15);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDEAA</div><div class="f1" style="text-align:left"><div class="c-danger fm t13">Sair</div></div></button>';
+  h += '<button class="card f ai g3 mb2 w100" onclick="go(\'#/notifications\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🔔</div><div class="f1" style="text-align:left"><div class="fm t13">Notificacoes</div></div><span class="c-dim">→</span></button>';
+  h += '<button class="card f ai g3 w100" onclick="logout()"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,71,87,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🚪</div><div class="f1" style="text-align:left"><div class="c-danger fm t13">Sair</div></div></button>';
   h += '<p class="c-dim t11 tc mt6">Glow v1.0.0</p><div style="height:20px"></div></div>';
   return h + bottomNav();
 }
@@ -1261,52 +1308,23 @@ function shareCampaign() {
 }
 
 // ======================== RENDER ========================
-function render() {
-  var app = document.getElementById("app");
-  var hash = location.hash || "#/";
-
-  if (!sb) {
-    app.innerHTML = renderSetup();
-    return;
-  }
-
-  if (!S.user && hash !== "#/login") {
-    sb.auth.getSession().then(function(r) {
-      if (r.data && r.data.session && r.data.session.user) {
-        S.user = r.data.session.user;
-        fetchProfile().then(function() {
-          if (!S.profile || !S.profile.name) {
-            S.step = 3;
-            app.innerHTML = renderLogin();
-          } else {
-            renderRoute(hash);
-          }
-        });
-      } else {
-        app.innerHTML = renderLogin();
-      }
-    });
-    return;
-  }
-
-  if (hash === "#/login") {
-    app.innerHTML = renderLogin();
-  } else {
-    renderRoute(hash);
-  }
-}
-
 function renderRoute(hash) {
   var app = document.getElementById("app");
+  var isAdmin = S.profile && S.profile.role === "admin";
+
+  // Redirect admin to admin panel
+  if (isAdmin && (hash === "#/" || hash === "")) {
+    hash = "#/admin";
+    location.hash = "#/admin";
+    return;
+  }
 
   if (hash === "#/" || hash === "") {
     app.innerHTML = renderFeed();
     fetchCampaigns().then(function(list) {
       var c = document.getElementById("list-campaigns");
       if (!c) return;
-      c.innerHTML = list.length
-        ? list.map(campaignCard).join("")
-        : '<div class="tc" style="padding:40px"><div style="font-size:40px">\uD83D\uDD0D</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>';
+      c.innerHTML = list.length ? list.map(campaignCard).join("") : '<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>';
     });
     var si = document.getElementById("in-search");
     if (si) {
@@ -1317,9 +1335,7 @@ function renderRoute(hash) {
           fetchCampaigns(si.value).then(function(list) {
             var c = document.getElementById("list-campaigns");
             if (!c) return;
-            c.innerHTML = list.length
-              ? list.map(campaignCard).join("")
-              : '<div class="tc" style="padding:40px"><div style="font-size:40px">\uD83D\uDD0D</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>';
+            c.innerHTML = list.length ? list.map(campaignCard).join("") : '<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>';
           });
         }, 300);
       });
@@ -1367,6 +1383,24 @@ function renderRoute(hash) {
   } else if (hash === "#/merchant/validations") {
     app.innerHTML = renderValidations();
     loadValidations();
+  } else if (hash === "#/admin") {
+    app.innerHTML = renderAdmin();
+    loadAdmin();
+  } else if (hash === "#/admin/users") {
+    app.innerHTML = renderAdminUsers();
+    loadAdminUsers();
+  } else if (hash === "#/admin/campaigns") {
+    app.innerHTML = renderAdminCampaigns();
+    loadAdminCampaigns();
+  } else if (hash === "#/admin/posts") {
+    app.innerHTML = renderAdminPosts();
+    loadAdminPosts();
+  } else if (hash === "#/admin/finance") {
+    app.innerHTML = renderAdminFinance();
+    loadAdminFinance();
+  } else if (hash === "#/admin/settings") {
+    app.innerHTML = renderAdminSettings();
+    loadAdminSettings();
   } else {
     location.hash = "#/";
   }
@@ -1403,7 +1437,513 @@ var ml = document.createElement("link");
 ml.rel = "manifest";
 ml.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
 document.head.appendChild(ml);
+// ======================== ADMIN DATA ========================
+function fetchAdminStats() {
+  if (!S.user) return Promise.resolve({});
+  return Promise.all([
+    sb.from("profiles").select("id,role,total_earned", { count: "exact" }),
+    sb.from("companies").select("id", { count: "exact" }),
+    sb.from("campaigns").select("id,status,per_post_value,total_posts_allowed,approved_posts"),
+    sb.from("posts").select("id,status,earnings"),
+    sb.from("transactions").select("type,amount,status"),
+    sb.from("admin_settings").select("*").single()
+  ]).then(function(r) {
+    var profiles = r[0].data || [];
+    var campaigns = r[2].data || [];
+    var posts = r[3].data || [];
+    var txns = r[4].data || [];
 
+    return {
+      totalUsers: profiles.length,
+      totalMerchants: profiles.filter(function(p){return p.role==="merchant"}).length,
+      totalCreators: profiles.filter(function(p){return p.role==="resident"}).length,
+      totalCompanies: r[1].count || 0,
+      totalCampaigns: campaigns.length,
+      activeCampaigns: campaigns.filter(function(c){return c.status==="active"}).length,
+      totalPosts: posts.length,
+      approvedPosts: posts.filter(function(p){return p.status==="approved"}).length,
+      pendingPosts: posts.filter(function(p){return p.status==="pending"}).length,
+      rejectedPosts: posts.filter(function(p){return p.status==="rejected"}).length,
+      totalRevenue: txns.filter(function(t){return t.type==="earning"&&t.status==="completed"}).reduce(function(a,t){return a+(Number(t.amount)||0)},0),
+      totalWithdrawn: txns.filter(function(t){return t.type==="withdrawal"&&t.status==="completed"}).reduce(function(a,t){return a+Math.abs(Number(t.amount)||0)},0),
+      pendingWithdrawals: txns.filter(function(t){return t.type==="withdrawal"&&t.status==="pending"}).length,
+      settings: r[5].data || {}
+    };
+  });
+}
+
+function fetchAdminUsers(search, role) {
+  var q = sb.from("profiles").select("*").order("created_at", {ascending:false}).limit(50);
+  if (role) q = q.eq("role", role);
+  return q.then(function(r) { return r.data || []; });
+}
+
+function fetchAdminCampaigns() {
+  return sb.from("campaigns").select("*, companies(name,city)").order("created_at", {ascending:false}).limit(50).then(function(r) { return r.data || []; });
+}
+
+function fetchAdminPosts() {
+  return sb.from("posts").select("*, profiles(name,email), campaigns(title,per_post_value,companies(name))").order("created_at", {ascending:false}).limit(50).then(function(r) { return r.data || []; });
+}
+
+function fetchAdminTransactions() {
+  return sb.from("transactions").select("*, profiles(name,email)").order("created_at", {ascending:false}).limit(50).then(function(r) { return r.data || []; });
+}
+
+function fetchAdminWithdrawals() {
+  return sb.from("transactions").select("*, profiles(name,email,pix_key)").eq("type","withdrawal").eq("status","pending").order("created_at",{ascending:false}).then(function(r){ return r.data || []; });
+}
+
+// ======================== ADMIN NAV ========================
+function adminNav() {
+  var hash = location.hash || "#/admin";
+  var items = [
+    { r: "#/admin", i: "📊", l: "Dashboard", on: hash === "#/admin" },
+    { r: "#/admin/users", i: "👥", l: "Users", on: hash.indexOf("#/admin/users") === 0 },
+    { r: "#/admin/posts", i: "📝", l: "Posts", on: hash.indexOf("#/admin/posts") === 0 },
+    { r: "#/admin/finance", i: "💰", l: "Financeiro", on: hash.indexOf("#/admin/finance") === 0 },
+    { r: "#/admin/settings", i: "⚙️", l: "Config", on: hash.indexOf("#/admin/settings") === 0 }
+  ];
+  var h = '<div class="nav-bottom">';
+  items.forEach(function(item) {
+    h += '<button class="nav-btn' + (item.on ? ' on' : '') + '" onclick="go(\'' + item.r + '\')"><span class="ni">' + item.i + '</span><span>' + item.l + '</span></button>';
+  });
+  return h + '</div>';
+}
+
+// ======================== ADMIN DASHBOARD ========================
+function renderAdmin() {
+  return topBar("🛡️ Admin") + '<div class="page" id="pg-admin"><div class="skel" style="height:300px"></div></div>' + adminNav();
+}
+
+function loadAdmin() {
+  fetchAdminStats().then(function(st) {
+    var pg = document.getElementById("pg-admin");
+    if (!pg) return;
+    var h = "";
+
+    h += '<div class="card-glow mb4"><div style="position:relative;z-index:1">';
+    h += '<h2 class="t22 fb">🛡️ Painel Admin</h2>';
+    h += '<p class="t13 mt1" style="opacity:.8">Visao geral da plataforma</p></div></div>';
+
+    // Stats grid
+    h += '<div class="stat-grid mb3">';
+    h += '<div class="stat-box"><div class="stat-n c-pri">' + st.totalUsers + '</div><div class="stat-l">Usuarios</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-ok">' + st.totalCompanies + '</div><div class="stat-l">Empresas</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-acc">' + st.totalCampaigns + '</div><div class="stat-l">Campanhas</div></div>';
+    h += '</div>';
+
+    h += '<div class="stat-grid mb3">';
+    h += '<div class="stat-box"><div class="stat-n c-pri">' + st.totalPosts + '</div><div class="stat-l">Posts Total</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-ok">' + st.approvedPosts + '</div><div class="stat-l">Aprovados</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-warn">' + st.pendingPosts + '</div><div class="stat-l">Pendentes</div></div>';
+    h += '</div>';
+
+    h += '<div class="card mb3"><h3 class="fb t18 mb3">💰 Financeiro</h3>';
+    h += '<div class="stat-grid-2">';
+    h += '<div class="stat-box"><div class="stat-n c-ok">' + money(st.totalRevenue) + '</div><div class="stat-l">Receita Total</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-danger">' + money(st.totalWithdrawn) + '</div><div class="stat-l">Sacado</div></div>';
+    h += '</div></div>';
+
+    h += '<div class="card mb3"><h3 class="fb t18 mb3">📊 Por Tipo de Usuario</h3>';
+    h += '<div class="stat-grid-2">';
+    h += '<div class="stat-box"><div class="stat-n c-pri">' + st.totalCreators + '</div><div class="stat-l">Criadores</div></div>';
+    h += '<div class="stat-box"><div class="stat-n c-acc">' + st.totalMerchants + '</div><div class="stat-l">Lojistas</div></div>';
+    h += '</div></div>';
+
+    // Quick actions
+    h += '<div class="card mb3"><h3 class="fb t18 mb3">⚡ Acoes Rapidas</h3>';
+    h += '<div class="f fc g2">';
+    h += '<button class="btn btn-pri" onclick="go(\'#/admin/users\')">👥 Gerenciar Usuarios</button>';
+    h += '<button class="btn btn-sec" onclick="go(\'#/admin/campaigns\')">📢 Todas as Campanhas</button>';
+    h += '<button class="btn btn-sec" onclick="go(\'#/admin/posts\')">📝 Todos os Posts</button>';
+    h += '<button class="btn btn-sec" onclick="go(\'#/admin/finance\')">💰 Financeiro e Saques</button>';
+    h += '<button class="btn btn-sec" onclick="go(\'#/admin/settings\')">⚙️ Configuracoes</button>';
+    h += '</div></div>';
+
+    // Alerts
+    if (st.pendingWithdrawals > 0) {
+      h += '<div class="card mb3" style="background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.3)">';
+      h += '<div class="f ai g3"><div style="font-size:24px">⚠️</div><div><div class="fb t13 c-warn">' + st.pendingWithdrawals + ' saque(s) pendente(s)</div>';
+      h += '<button class="btn btn-sec btn-sm mt2" onclick="go(\'#/admin/finance\')">Ver saques</button></div></div></div>';
+    }
+
+    h += '<div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+// ======================== ADMIN USERS ========================
+function renderAdminUsers() {
+  return topBar("👥 Usuarios") + '<div class="page" id="pg-ausers"><div class="skel" style="height:200px"></div></div>' + adminNav();
+}
+
+function loadAdminUsers() {
+  fetchAdminUsers().then(function(users) {
+    var pg = document.getElementById("pg-ausers");
+    if (!pg) return;
+
+    var h = '<div class="chips mb4">';
+    h += '<div class="chip on" onclick="filterAdminUsers(\'\')">Todos</div>';
+    h += '<div class="chip" onclick="filterAdminUsers(\'resident\')">Criadores</div>';
+    h += '<div class="chip" onclick="filterAdminUsers(\'merchant\')">Lojistas</div>';
+    h += '<div class="chip" onclick="filterAdminUsers(\'admin\')">Admins</div>';
+    h += '</div>';
+    h += '<div id="admin-users-list">';
+    h += renderAdminUserList(users);
+    h += '</div><div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+function renderAdminUserList(users) {
+  if (users.length === 0) return '<div class="tc" style="padding:40px"><div style="font-size:40px">👥</div><p class="c-dim t13 mt2">Nenhum usuario</p></div>';
+  var h = '<div class="f fc g2">';
+  users.forEach(function(u) {
+    var roleBadge = u.role === "admin" ? "b-danger" : u.role === "merchant" ? "b-warn" : "b-ok";
+    var roleLabel = u.role === "admin" ? "🛡️ Admin" : u.role === "merchant" ? "🏪 Lojista" : "📱 Criador";
+    var verified = u.is_verified ? "✅" : "⏳";
+
+    h += '<div class="card" style="padding:12px"><div class="f ai g3">';
+    h += '<div class="rounded-full" style="width:40px;height:40px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">';
+    h += (u.avatar_url) ? '<img src="' + esc(u.avatar_url) + '" style="width:100%;height:100%;border-radius:50%;object-cover">' : esc((u.name || u.email || "U").charAt(0));
+    h += '</div>';
+    h += '<div class="f1" style="min-width:0"><div class="f ai g1"><span class="fm t13" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(u.name || "Sem nome") + '</span> ' + verified + '</div>';
+    h += '<div class="c-dim t11" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(u.email || "") + '</div>';
+    h += '<div class="f g1 mt1"><span class="badge ' + roleBadge + '" style="font-size:9px">' + roleLabel + '</span>';
+    h += '<span class="badge b-pri" style="font-size:9px">' + money(u.total_earned || 0) + '</span></div></div>';
+    h += '<button class="btn btn-ghost btn-sm" onclick="openAdminUser(\'' + u.id + '\')">...</button>';
+    h += '</div></div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function filterAdminUsers(role) {
+  fetchAdminUsers(null, role || null).then(function(users) {
+    var el = document.getElementById("admin-users-list");
+    if (el) el.innerHTML = renderAdminUserList(users);
+    // Update chips
+    document.querySelectorAll(".chip").forEach(function(c) {
+      c.classList.toggle("on", (c.textContent === "Todos" && !role) || (c.textContent === "Criadores" && role === "resident") || (c.textContent === "Lojistas" && role === "merchant") || (c.textContent === "Admins" && role === "admin"));
+    });
+  });
+}
+
+function openAdminUser(userId) {
+  sb.from("profiles").select("*").eq("id", userId).single().then(function(r) {
+    var u = r.data;
+    if (!u) return;
+    var html = '<div class="ov"><div class="sheet"><div class="sh-h"></div>';
+    html += '<h2 class="t22 fb mb4">' + esc(u.name || "Usuario") + '</h2>';
+    html += '<div class="fg"><label class="fl">Email</label><input class="fi" value="' + esc(u.email || "") + '" disabled></div>';
+    html += '<div class="fg"><label class="fl">Nome</label><input class="fi" id="au-name" value="' + esc(u.name || "") + '"></div>';
+    html += '<div class="fg"><label class="fl">Role</label><select class="fi" id="au-role">';
+    html += '<option value="resident"' + (u.role === "resident" ? " selected" : "") + '>📱 Criador</option>';
+    html += '<option value="merchant"' + (u.role === "merchant" ? " selected" : "") + '>🏪 Lojista</option>';
+    html += '<option value="admin"' + (u.role === "admin" ? " selected" : "") + '>🛡️ Admin</option>';
+    html += '</select></div>';
+    html += '<div class="fg"><label class="fl">Verificado</label><select class="fi" id="au-verified">';
+    html += '<option value="true"' + (u.is_verified ? " selected" : "") + '>✅ Verificado</option>';
+    html += '<option value="false"' + (!u.is_verified ? " selected" : "") + '>⏳ Nao verificado</option>';
+    html += '</select></div>';
+    html += '<div class="f g2 mb4">';
+    html += '<button class="btn btn-danger btn-sm f1" onclick="deleteAdminUser(\'' + u.id + '\')">Excluir</button>';
+    html += '</div>';
+    html += '<div class="f g3"><button class="btn btn-sec" onclick="this.closest(\'.ov\').remove()">Cancelar</button>';
+    html += '<button class="btn btn-pri" onclick="saveAdminUser(\'' + u.id + '\',this)">Salvar</button></div>';
+    html += '</div></div>';
+    document.body.insertAdjacentHTML("beforeend", html);
+  });
+}
+
+function saveAdminUser(userId, btn) {
+  btn.textContent = "Salvando...";
+  btn.disabled = true;
+  var name = ((document.getElementById("au-name") || {}).value) || "";
+  var role = ((document.getElementById("au-role") || {}).value) || "resident";
+  var verified = ((document.getElementById("au-verified") || {}).value) === "true";
+
+  sb.from("profiles").update({ name: name, role: role, is_verified: verified }).eq("id", userId).then(function(r) {
+    if (r.error) { toast(r.error.message, "err"); return; }
+    toast("Usuario atualizado!");
+    var ov = document.querySelector(".ov");
+    if (ov) ov.remove();
+    loadAdminUsers();
+  });
+}
+
+function deleteAdminUser(userId) {
+  if (!confirm("Excluir este usuario? Esta acao nao pode ser desfeita.")) return;
+  sb.from("profiles").delete().eq("id", userId).then(function(r) {
+    if (r.error) { toast(r.error.message, "err"); return; }
+    toast("Usuario excluido");
+    var ov = document.querySelector(".ov");
+    if (ov) ov.remove();
+    loadAdminUsers();
+  });
+}
+
+// ======================== ADMIN CAMPAIGNS ========================
+function renderAdminCampaigns() {
+  return topBar("📢 Campanhas") + '<div class="page" id="pg-acamp"><div class="skel" style="height:200px"></div></div>' + adminNav();
+}
+
+function loadAdminCampaigns() {
+  fetchAdminCampaigns().then(function(campaigns) {
+    var pg = document.getElementById("pg-acamp");
+    if (!pg) return;
+    if (campaigns.length === 0) {
+      pg.innerHTML = '<div class="tc" style="padding:40px"><div style="font-size:40px">📢</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>';
+      return;
+    }
+    var h = '<div class="f fc g2">';
+    campaigns.forEach(function(c) {
+      var statusColor = c.status === "active" ? "b-ok" : c.status === "paused" ? "b-warn" : c.status === "completed" ? "b-pri" : "b-danger";
+      h += '<div class="card" style="padding:12px">';
+      h += '<div class="f jb ai mb2"><div class="fs t13">' + esc(c.title) + '</div><span class="badge ' + statusColor + '">' + c.status + '</span></div>';
+      h += '<div class="c-dim t11 mb2">' + esc((c.companies && c.companies.name) || "") + ' · ' + money(c.per_post_value) + '/post · ' + (c.approved_posts || 0) + '/' + (c.total_posts_allowed || 0) + '</div>';
+      h += '<div class="prog mb2"><div class="prog-bar" style="width:' + Math.min(((c.approved_posts || 0) / (c.total_posts_allowed || 1)) * 100, 100) + '%"></div></div>';
+      h += '<div class="f g2">';
+      h += '<button class="btn btn-ghost btn-sm f1" onclick="adminToggleCamp(\'' + c.id + '\',\'' + c.status + '\')">' + (c.status === "active" ? "Pausar" : "Ativar") + '</button>';
+      h += '<button class="btn btn-danger btn-sm f1" onclick="adminDeleteCamp(\'' + c.id + '\')">Excluir</button>';
+      h += '</div></div>';
+    });
+    h += '</div><div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+function adminToggleCamp(id, status) {
+  var ns = status === "active" ? "paused" : "active";
+  sb.from("campaigns").update({ status: ns }).eq("id", id).then(function() {
+    toast("Campanha " + (ns === "active" ? "ativada" : "pausada"));
+    loadAdminCampaigns();
+  });
+}
+
+function adminDeleteCamp(id) {
+  if (!confirm("Excluir esta campanha?")) return;
+  sb.from("campaigns").delete().eq("id", id).then(function() {
+    toast("Campanha excluida");
+    loadAdminCampaigns();
+  });
+}
+
+// ======================== ADMIN POSTS ========================
+function renderAdminPosts() {
+  return topBar("📝 Posts") + '<div class="page" id="pg-aposts"><div class="skel" style="height:200px"></div></div>' + adminNav();
+}
+
+function loadAdminPosts() {
+  fetchAdminPosts().then(function(posts) {
+    var pg = document.getElementById("pg-aposts");
+    if (!pg) return;
+    if (posts.length === 0) {
+      pg.innerHTML = '<div class="tc" style="padding:40px"><div style="font-size:40px">📝</div><p class="c-dim t13 mt2">Nenhum post</p></div>';
+      return;
+    }
+    var h = '<div class="f fc g3">';
+    posts.forEach(function(p) {
+      var sm = {
+        approved: { i: "✅", l: "Aprovado", c: "b-ok" },
+        rejected: { i: "❌", l: "Rejeitado", c: "b-danger" },
+        pending: { i: "⏳", l: "Pendente", c: "b-warn" }
+      };
+      var st = sm[p.status] || sm.pending;
+
+      h += '<div class="card ovh" style="padding:0">';
+      h += '<div class="f ai g3 p3">';
+      h += '<div class="rounded-full" style="width:36px;height:36px;background:rgba(108,60,225,.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--pri);flex-shrink:0">' + esc(((p.profiles && p.profiles.name) || "?").charAt(0)) + '</div>';
+      h += '<div class="f1" style="min-width:0"><div class="fm t13" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc((p.profiles && p.profiles.name) || "") + '</div>';
+      h += '<div class="c-dim t11">' + esc((p.campaigns && p.campaigns.title) || "") + ' \u00B7 ' + dateBR(p.created_at) + '</div></div>';
+      h += '<span class="badge ' + st.c + '">' + st.i + ' ' + st.l + '</span></div>';
+      if (p.screenshot_url) h += '<img src="' + esc(p.screenshot_url) + '" style="width:100%;max-height:200px;object-fit:contain;background:rgba(0,0,0,.2)" onclick="showImg(\'' + esc(p.screenshot_url) + '\')" class="pointer">';
+      h += '<div class="f g2 p3">';
+      h += '<button class="btn btn-ghost btn-sm f1" onclick="showImg(\'' + esc(p.screenshot_url || "") + '\')">Ver Print</button>';
+      if (p.status === "pending") {
+        h += '<button class="btn btn-danger btn-sm f1" onclick="doReject(\'' + p.id + '\')">Rejeitar</button>';
+        h += '<button class="btn btn-ok btn-sm f1" onclick="doApprove(\'' + p.id + '\')">Aprovar</button>';
+      }
+      h += '</div></div>';
+    });
+    h += '</div><div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+// ======================== ADMIN FINANCE ========================
+function renderAdminFinance() {
+  return topBar("💰 Financeiro") + '<div class="page" id="pg-afin"><div class="skel" style="height:200px"></div></div>' + adminNav();
+}
+
+function loadAdminFinance() {
+  Promise.all([fetchAdminStats(), fetchAdminWithdrawals(), fetchAdminTransactions()]).then(function(r) {
+    var st = r[0], withdrawals = r[1], txns = r[2];
+    var pg = document.getElementById("pg-afin");
+    if (!pg) return;
+
+    var h = "";
+
+    // Overview
+    h += '<div class="card-glow mb4"><div style="position:relative;z-index:1">';
+    h += '<p class="t13" style="opacity:.7">Receita total</p>';
+    h += '<div style="font-size:36px;font-weight:700">' + money(st.totalRevenue) + '</div>';
+    h += '<div class="f g2 mt3">';
+    h += '<div class="f1" style="background:rgba(255,255,255,.1);border-radius:12px;padding:10px"><div class="t11" style="opacity:.6">Sacado</div><div class="fs t13">' + money(st.totalWithdrawn) + '</div></div>';
+    h += '<div class="f1" style="background:rgba(255,255,255,.1);border-radius:12px;padding:10px"><div class="t11" style="opacity:.6">Comissao</div><div class="fs t13">' + money(st.totalRevenue * (st.settings.commission_rate || 0.15)) + '</div></div>';
+    h += '</div></div></div>';
+
+    // Pending withdrawals
+    h += '<h3 class="fb t18 mb3">💸 Saques Pendentes (' + withdrawals.length + ')</h3>';
+    if (withdrawals.length === 0) {
+      h += '<div class="card tc p4 mb4"><p class="c-dim t13">Nenhum saque pendente</p></div>';
+    } else {
+      withdrawals.forEach(function(w) {
+        h += '<div class="card mb2"><div class="f ai g3">';
+        h += '<div class="rounded-full" style="width:38px;height:38px;background:rgba(255,152,0,.15);display:flex;align-items:center;justify-content:center;font-size:18px">💸</div>';
+        h += '<div class="f1"><div class="fm t13">' + esc((w.profiles && w.profiles.name) || "") + '</div>';
+        h += '<div class="c-dim t11">Pix: ' + esc((w.profiles && w.profiles.pix_key) || "Nao configurado") + '</div>';
+        h += '<div class="c-dim t11">' + dtBR(w.created_at) + '</div></div>';
+        h += '<div class="tc"><div class="fb c-danger t13">' + money(Math.abs(w.amount)) + '</div></div></div>';
+        h += '<div class="f g2 mt2">';
+        h += '<button class="btn btn-danger btn-sm f1" onclick="adminRejectWithdrawal(\'' + w.id + '\')">Rejeitar</button>';
+        h += '<button class="btn btn-ok btn-sm f1" onclick="adminApproveWithdrawal(\'' + w.id + '\')">Aprovar</button>';
+        h += '</div></div>';
+      });
+    }
+
+    // All transactions
+    h += '<h3 class="fb t18 mb3 mt6">📊 Ultimas Transacoes</h3>';
+    h += '<div class="f fc g2">';
+    txns.slice(0, 20).forEach(function(t) {
+      var icons = { earning: "💰", withdrawal: "💸", bonus: "🎁", commission: "📈", fee: "📋" };
+      var pos = ["earning", "bonus", "commission"].indexOf(t.type) >= 0;
+      h += '<div class="card f ai g3" style="padding:12px">';
+      h += '<div class="rounded-full" style="width:36px;height:36px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:16px">' + (icons[t.type] || "💰") + '</div>';
+      h += '<div class="f1" style="min-width:0"><div class="t13 fm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(t.description || t.type) + '</div>';
+      h += '<div class="c-dim t11">' + esc((t.profiles && t.profiles.name) || "") + ' · ' + dtBR(t.created_at) + '</div></div>';
+      h += '<div class="tc"><div class="fb t13 ' + (pos ? "c-ok" : "c-danger") + '">' + (pos ? "+" : "-") + " " + money(t.amount) + '</div>';
+      h += '<span class="badge ' + (t.status === "completed" ? "b-ok" : "b-warn") + '" style="font-size:9px">' + t.status + '</span></div></div>';
+    });
+    h += '</div>';
+    h += '<div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+function adminApproveWithdrawal(txnId) {
+  sb.from("transactions").select("*, profiles(id,total_withdrawn)").eq("id", txnId).single().then(function(r) {
+    if (!r.data) return;
+    var txn = r.data;
+    return sb.from("transactions").update({ status: "completed" }).eq("id", txnId).then(function() {
+      var prof = txn.profiles || {};
+      return sb.from("profiles").update({
+        total_withdrawn: ((prof.total_withdrawn || 0) + Math.abs(txn.amount))
+      }).eq("id", txn.user_id);
+    }).then(function() {
+      return sb.from("notifications").insert({
+        user_id: txn.user_id,
+        type: "info",
+        title: "💸 Saque aprovado!",
+        message: "Seu saque de " + money(Math.abs(txn.amount)) + " foi aprovado"
+      });
+    }).then(function() {
+      toast("Saque aprovado!");
+      loadAdminFinance();
+    });
+  });
+}
+
+function adminRejectWithdrawal(txnId) {
+  var reason = prompt("Motivo da rejeicao:");
+  if (!reason) return;
+  sb.from("transactions").update({ status: "failed", description: "Rejeitado: " + reason }).eq("id", txnId).then(function() {
+    return sb.from("transactions").select("user_id,amount").eq("id", txnId).single();
+  }).then(function(r) {
+    return sb.from("notifications").insert({
+      user_id: (r.data && r.data.user_id) || "",
+      type: "info",
+      title: "❌ Saque rejeitado",
+      message: "Motivo: " + reason + " - Valor devolvido ao saldo"
+    });
+  }).then(function() {
+    toast("Saque rejeitado e saldo devolvido");
+    loadAdminFinance();
+  });
+}
+
+// ======================== ADMIN SETTINGS ========================
+function renderAdminSettings() {
+  return topBar("⚙️ Configuracoes") + '<div class="page" id="pg-aset"><div class="skel" style="height:200px"></div></div>' + adminNav();
+}
+
+function loadAdminSettings() {
+  sb.from("admin_settings").select("*").single().then(function(r) {
+    var st = r.data || {};
+    var pg = document.getElementById("pg-aset");
+    if (!pg) return;
+
+    var h = '<div class="card mb3"><h3 class="fb t18 mb3">💰 Taxas e Limites</h3>';
+    h += '<div class="fg"><label class="fl">Taxa de comissao (%)</label><input class="fi tc" id="as-commission" type="number" step="1" min="0" max="50" value="' + Math.round((st.commission_rate || 0.15) * 100) + '"></div>';
+    h += '<div class="grid2"><div class="fg"><label class="fl">Saque minimo (R$)</label><input class="fi tc" id="as-minw" type="number" step="1" min="1" value="' + (st.min_withdraw || 5) + '"></div>';
+    h += '<div class="fg"><label class="fl">Saque maximo (R$)</label><input class="fi tc" id="as-maxw" type="number" step="100" min="100" value="' + (st.max_withdraw || 5000) + '"></div></div>';
+    h += '<div class="grid2"><div class="fg"><label class="fl">Valor min/post (R$)</label><input class="fi tc" id="as-minpost" type="number" step="1" min="1" value="' + (st.min_post_value || 1) + '"></div>';
+    h += '<div class="fg"><label class="fl">Valor max/post (R$)</label><input class="fi tc" id="as-maxpost" type="number" step="10" min="10" value="' + (st.max_post_value || 500) + '"></div></div>';
+    h += '</div>';
+
+    h += '<div class="card mb3"><h3 class="fb t18 mb3">🔧 Controles</h3>';
+    h += '<div class="f jb ai mb3"><div><div class="fm t13">Cadastro aberto</div><div class="c-dim t11">Permitir novos cadastros</div></div>';
+    h += '<div class="chip' + (st.is_registration_open ? " on" : "") + '" onclick="toggleAdminSetting(\'is_registration_open\',this)">' + (st.is_registration_open ? "ON" : "OFF") + '</div></div>';
+    h += '<div class="f jb ai"><div><div class="fm t13">Criacao de campanhas</div><div class="c-dim t11">Permitir lojistas criarem</div></div>';
+    h += '<div class="chip' + (st.is_campaign_creation_open ? " on" : "") + '" onclick="toggleAdminSetting(\'is_campaign_creation_open\',this)">' + (st.is_campaign_creation_open ? "ON" : "OFF") + '</div></div>';
+    h += '</div>';
+
+    h += '<div class="card mb3"><h3 class="fb t18 mb3">📧 Info</h3>';
+    h += '<div class="fg"><label class="fl">Nome da plataforma</label><input class="fi" id="as-name" value="' + esc(st.platform_name || "Glow") + '"></div>';
+    h += '<div class="fg"><label class="fl">Email de suporte</label><input class="fi" id="as-email" type="email" value="' + esc(st.support_email || "") + '"></div>';
+    h += '</div>';
+
+    h += '<button class="btn btn-pri t18" onclick="saveAdminSettings(this)">Salvar Configuracoes</button>';
+    h += '<div style="height:20px"></div>';
+    pg.innerHTML = h;
+  });
+}
+
+function toggleAdminSetting(field, el) {
+  var current = el.classList.contains("on");
+  var newVal = !current;
+  var data = {};
+  data[field] = newVal;
+  sb.from("admin_settings").update(data).limit(1).then(function(r) {
+    if (r.error) { toast(r.error.message, "err"); return; }
+    el.classList.toggle("on", newVal);
+    el.textContent = newVal ? "ON" : "OFF";
+    toast("Configuracao atualizada!");
+  });
+}
+
+function saveAdminSettings(btn) {
+  btn.textContent = "Salvando...";
+  btn.disabled = true;
+  var data = {
+    commission_rate: (((document.getElementById("as-commission") || {}).value) || 15) / 100,
+    min_withdraw: parseFloat(((document.getElementById("as-minw") || {}).value)) || 5,
+    max_withdraw: parseFloat(((document.getElementById("as-maxw") || {}).value)) || 5000,
+    min_post_value: parseFloat(((document.getElementById("as-minpost") || {}).value)) || 1,
+    max_post_value: parseFloat(((document.getElementById("as-maxpost") || {}).value)) || 500,
+    platform_name: ((document.getElementById("as-name") || {}).value) || "Glow",
+    support_email: ((document.getElementById("as-email") || {}).value) || "",
+    updated_at: new Date().toISOString()
+  };
+  sb.from("admin_settings").update(data).limit(1).then(function(r) {
+    if (r.error) { toast(r.error.message, "err"); return; }
+    toast("Configuracoes salvas!");
+    btn.textContent = "Salvar Configuracoes";
+    btn.disabled = false;
+    loadAdminSettings();
+  });
+}
 // ======================== BOOT ========================
 window.addEventListener("hashchange", function() { render(); });
 
