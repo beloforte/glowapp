@@ -198,46 +198,53 @@ function topBar(title){
 }
 
 function bottomNav(){
-  var hash=location.hash||"#/";var isMer=S.profile&&S.profile.role==="merchant";var isAdmin=S.profile&&S.profile.role==="admin";
-  if(isAdmin){
-    var ai=[{r:"#/admin",i:"📊",l:"Admin",on:hash==="#/admin"},{r:"#/admin/users",i:"👥",l:"Users",on:hash.indexOf("#/admin/users")===0},{r:"#/admin/posts",i:"📝",l:"Posts",on:hash.indexOf("#/admin/posts")===0},{r:"#/admin/finance",i:"💰",l:"Finance",on:hash.indexOf("#/admin/finance")===0},{r:"#/admin/settings",i:"⚙️",l:"Config",on:hash.indexOf("#/admin/settings")===0}];
-    var h='<div class="nav-bottom">';ai.forEach(function(i){h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'});return h+'</div>'
-  }
-  if(isMer){
-    var mi=[{r:"#/merchant",i:"📊",l:"Painel",on:hash==="#/merchant"},{r:"#/merchant/campaigns",i:"📢",l:"Campanhas",on:hash.indexOf("#/merchant/campaigns")===0},{r:"#/merchant/campaigns/new",i:"➕",l:"",center:true},{r:"#/merchant/validations",i:"✅",l:"Validar",on:hash.indexOf("#/merchant/validations")===0},{r:"#/profile",i:"👤",l:"Perfil",on:hash==="#/profile"}];
-    var h='<div class="nav-bottom">';mi.forEach(function(i){if(i.center){h+='<button class="nav-btn center" onclick="go(\''+i.r+'\')"><div class="nw"><span class="ni">'+i.i+'</span></div></button>'}else{h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'}});return h+'</div>'
-  }
-  var ci=[{r:"#/",i:"🏠",l:"Feed",on:hash==="#/"||hash.indexOf("#/campaign")===0},{r:"#/wallet",i:"💰",l:"Ganhos",on:hash==="#/wallet"},{r:"#/ranking",i:"🏆",l:"Ranking",on:hash==="#/ranking"},{r:"#/my-posts",i:"📝",l:"Posts",on:hash==="#/my-posts"},{r:"#/profile",i:"👤",l:"Perfil",on:hash==="#/profile"}];
-  var h='<div class="nav-bottom">';ci.forEach(function(i){h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'});return h+'</div>'
-}
+  var hash=location.hash||"#/";
+  var isMer=S.profile&&S.profile.role==="merchant";
+  var isAdmin=S.profile&&S.profile.role==="admin";
 
-function renderLogin(){
-  var st=S.step;var h='<div class="page fc ai jc" style="min-height:100dvh;padding-top:40px">';
-  h+='<div style="position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);width:300px;height:300px;background:rgba(108,60,225,.15);border-radius:50%;filter:blur(80px);pointer-events:none"></div>';
-  h+='<div class="tc mb6" style="position:relative;z-index:1"><div class="logo-i mxa" style="width:72px;height:72px;border-radius:20px;font-size:36px">🌟</div><h1 class="t28 fb mt3">Glow</h1><p class="c-dim t13 mt2">Ganhe dinheiro divulgando negocios locais</p></div>';
-  h+='<div class="w100" style="max-width:360px;position:relative;z-index:1">';
-  if(st===1){
-    h+='<button class="btn btn-google" onclick="loginGoogle()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Entrar com Google</button>';
-    h+='<div class="divider">ou</div>';
-    h+='<div class="fg"><label class="fl">Seu email</label><input class="fi" type="email" id="in-email" placeholder="seu@email.com" autocomplete="email"></div>';
-    h+='<button class="btn btn-pri" id="btn-send" onclick="handleSendCode()">Receber codigo</button>';
-  }else if(st===2){
-    h+='<div class="tc mb4"><div class="t36">📬</div><p class="c-dim t13 mt2">Codigo enviado para<br><strong style="color:#F0F0FF">'+esc(S.email)+'</strong></p></div>';
-    h+='<div class="fg"><label class="fl">Codigo de verificacao</label><input class="fi tc mono" style="font-size:28px;letter-spacing:8px" placeholder="000000" id="in-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"></div>';
-    h+='<button class="btn btn-pri" id="btn-verify" onclick="handleVerifyCode()">Verificar</button>';
-    h+='<div class="f g2 mt2"><button class="btn btn-ghost" onclick="handleSendCode()">Reenviar</button><button class="btn btn-ghost" onclick="S.step=1;render()">Trocar email</button></div>';
-  }else{
-    h+='<div class="tc mb4"><div class="t36">👋</div><p class="c-dim t13 mt2">Bem-vindo! Configure seu perfil:</p></div>';
-    h+='<div class="fg"><label class="fl">Seu nome</label><input class="fi tc t18" placeholder="Como quer ser chamado?" id="in-name" maxlength="30"></div>';
-    h+='<div class="fg"><label class="fl">Como vai usar o Glow?</label>';
-    h+='<div class="f fc g2">';
-    h+='<div class="card pointer" id="role-creator" onclick="selectRole(\'resident\')" style="border:2px solid var(--pri);padding:16px"><div class="f ai g3"><div class="t36">📱</div><div><div class="fb t13">Quero ganhar divulgando</div><div class="c-dim t11">Publique negocios locais e ganhe dinheiro</div></div></div></div>';
-    h+='<div class="card pointer" id="role-merchant" onclick="selectRole(\'merchant\')" style="padding:16px"><div class="f ai g3"><div class="t36">🏪</div><div><div class="fb t13">Tenho um negocio</div><div class="c-dim t11">Divulgue sua empresa com criadores locais</div></div></div></div>';
-    h+='</div></div>';
-    h+='<button class="btn btn-pri t18" onclick="handleComplete()">Comecar!</button>';
+  if(isAdmin){
+    var ai=[
+      {r:"#/admin",i:"📊",l:"Admin",on:hash==="#/admin"},
+      {r:"#/admin/users",i:"👥",l:"Users",on:hash.indexOf("#/admin/users")===0},
+      {r:"#/",i:"🏠",l:"Feed",on:hash==="#/"},
+      {r:"#/admin/finance",i:"💰",l:"Finance",on:hash.indexOf("#/admin/finance")===0},
+      {r:"#/profile",i:"👤",l:"Perfil",on:hash==="#/profile"}
+    ];
+    var h='<div class="nav-bottom">';
+    ai.forEach(function(i){
+      h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'
+    });
+    return h+'</div>'
   }
-  h+='</div></div>';
-  return h
+
+  if(isMer){
+    var mi=[
+      {r:"#/merchant",i:"📊",l:"Painel",on:hash==="#/merchant"},
+      {r:"#/merchant/campaigns",i:"📢",l:"Campanhas",on:hash.indexOf("#/merchant/campaigns")===0},
+      {r:"#/merchant/campaigns/new",i:"➕",l:"",center:true},
+      {r:"#/merchant/validations",i:"✅",l:"Validar",on:hash.indexOf("#/merchant/validations")===0},
+      {r:"#/profile",i:"👤",l:"Perfil",on:hash==="#/profile"}
+    ];
+    var h='<div class="nav-bottom">';
+    mi.forEach(function(i){
+      if(i.center){h+='<button class="nav-btn center" onclick="go(\''+i.r+'\')"><div class="nw"><span class="ni">'+i.i+'</span></div></button>'}
+      else{h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'}
+    });
+    return h+'</div>'
+  }
+
+  var ci=[
+    {r:"#/",i:"🏠",l:"Feed",on:hash==="#/"||hash.indexOf("#/campaign")===0},
+    {r:"#/wallet",i:"💰",l:"Ganhos",on:hash==="#/wallet"},
+    {r:"#/ranking",i:"🏆",l:"Ranking",on:hash==="#/ranking"},
+    {r:"#/my-posts",i:"📝",l:"Posts",on:hash==="#/my-posts"},
+    {r:"#/profile",i:"👤",l:"Perfil",on:hash==="#/profile"}
+  ];
+  var h='<div class="nav-bottom">';
+  ci.forEach(function(i){
+    h+='<button class="nav-btn'+(i.on?" on":"")+'" onclick="go(\''+i.r+'\')"><span class="ni">'+i.i+'</span><span>'+i.l+'</span></button>'
+  });
+  return h+'</div>'
 }
 
 function renderFeed(){
@@ -363,41 +370,49 @@ function loadRanking(){
 }
 
 function renderProfile(){
-  var p=S.profile||{};var isMer=p.role==="merchant";var isAdmin=p.role==="admin";
+  var p=S.profile||{};
+  var isMer=p.role==="merchant";
+  var isAdmin=p.role==="admin";
   var h=topBar("Perfil")+'<div class="page">';
-  h+='<div class="tc mb6"><div class="rounded-full mxa" style="width:88px;height:88px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;border:3px solid rgba(108,60,225,.3)">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" style="width:100%;height:100%;border-radius:50%;object-cover">':esc((p.name||"U").charAt(0)))+'</div><h2 class="t22 fb mt3">'+esc(p.name||"Usuario")+'</h2><p class="c-dim t13">'+esc(p.email||(S.user&&S.user.email)||"")+'</p><span class="badge '+(isAdmin?"b-danger":isMer?"b-pri":"b-ok")+' mt2">'+(isAdmin?"🛡️ Admin":isMer?"🏪 Lojista":"📱 Criador")+'</span></div>';
-  if(isAdmin){h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/admin\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🛡️</div><div class="f1" style="text-align:left"><div class="fm t13">Painel Admin</div></div><span class="c-dim">→</span></button>'}
-  else if(isMer){h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📊</div><div class="f1" style="text-align:left"><div class="fm t13">Dashboard</div></div><span class="c-dim">→</span></button>';h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/campaigns\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📢</div><div class="f1" style="text-align:left"><div class="fm t13">Minhas Campanhas</div></div><span class="c-dim">→</span></button>';h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/register\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏪</div><div class="f1" style="text-align:left"><div class="fm t13">Dados da Empresa</div></div><span class="c-dim">→</span></button>'}
-  else{h+='<div class="stat-grid mb4"><div class="stat-box"><div class="stat-n c-pri">📝</div><div class="stat-l">Meus Posts</div></div><div class="stat-box"><div class="stat-n c-ok">'+money(p.total_earned||0)+'</div><div class="stat-l">Ganho Total</div></div><div class="stat-box"><div class="stat-n c-acc">💰</div><div class="stat-l">Carteira</div></div></div>';h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/wallet\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">💰</div><div class="f1" style="text-align:left"><div class="fm t13">Carteira</div></div><span class="c-dim">→</span></button>';h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/my-posts\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📝</div><div class="f1" style="text-align:left"><div class="fm t13">Meus Posts</div></div><span class="c-dim">→</span></button>';h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,152,0,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏪</div><div class="f1" style="text-align:left"><div class="fm t13">Sou Lojista</div></div><span class="c-dim">→</span></button>'}
+
+  // Avatar
+  h+='<div class="tc mb6">';
+  h+='<div class="rounded-full mxa" style="width:88px;height:88px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;border:3px solid rgba(108,60,225,.3)">';
+  h+=(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" style="width:100%;height:100%;border-radius:50%;object-cover">':esc((p.name||"U").charAt(0)));
+  h+='</div><h2 class="t22 fb mt3">'+esc(p.name||"Usuario")+'</h2>';
+  h+='<p class="c-dim t13">'+esc(p.email||(S.user&&S.user.email)||"")+'</p>';
+  h+='<span class="badge '+(isAdmin?"b-danger":isMer?"b-pri":"b-ok")+' mt2">'+(isAdmin?"🛡️ Admin":isMer?"🏪 Lojista":"📱 Criador")+'</span>';
+  h+='</div>';
+
+  if(isAdmin){
+    h+='<div class="card mb3" style="background:rgba(255,71,87,.08);border-color:rgba(255,71,87,.2)">';
+    h+='<h3 class="fb mb3">🛡️ Modo Admin Ativo</h3>';
+    h+='<button class="btn btn-pri mb2" onclick="go(\'#/admin\')">📊 Abrir Painel Admin</button>';
+    h+='<button class="btn btn-sec mb2" onclick="go(\'#/\')">🏠 Ver como Criador (Feed)</button>';
+    h+='<button class="btn btn-sec mb2" onclick="go(\'#/merchant\')">🏪 Ver como Lojista</button>';
+    h+='<button class="btn btn-sec mb2" onclick="go(\'#/wallet\')">💰 Ver Carteira</button>';
+    h+='<button class="btn btn-sec mb2" onclick="go(\'#/ranking\')">🏆 Ver Ranking</button>';
+    h+='</div>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/admin/users\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">👥</div><div class="f1" style="text-align:left"><div class="fm t13">Gerenciar Usuarios</div></div><span class="c-dim">→</span></button>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/admin/campaigns\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📢</div><div class="f1" style="text-align:left"><div class="fm t13">Gerenciar Campanhas</div></div><span class="c-dim">→</span></button>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/admin/finance\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">💰</div><div class="f1" style="text-align:left"><div class="fm t13">Financeiro</div></div><span class="c-dim">→</span></button>';
+  }
+  else if(isMer){
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📊</div><div class="f1" style="text-align:left"><div class="fm t13">Dashboard</div></div><span class="c-dim">→</span></button>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant/campaigns\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📢</div><div class="f1" style="text-align:left"><div class="fm t13">Minhas Campanhas</div></div><span class="c-dim">→</span></button>';
+  }
+  else{
+    h+='<div class="stat-grid mb4"><div class="stat-box"><div class="stat-n c-pri">📝</div><div class="stat-l">Meus Posts</div></div><div class="stat-box"><div class="stat-n c-ok">'+money(p.total_earned||0)+'</div><div class="stat-l">Ganho Total</div></div><div class="stat-box"><div class="stat-n c-acc">💰</div><div class="stat-l">Carteira</div></div></div>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/wallet\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">💰</div><div class="f1" style="text-align:left"><div class="fm t13">Carteira</div></div><span class="c-dim">→</span></button>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/my-posts\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">📝</div><div class="f1" style="text-align:left"><div class="fm t13">Meus Posts</div></div><span class="c-dim">→</span></button>';
+    h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/merchant\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,152,0,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🏪</div><div class="f1" style="text-align:left"><div class="fm t13">Sou Lojista</div></div><span class="c-dim">→</span></button>';
+  }
+
+  // Notificações + Sair (sempre visíveis)
   h+='<button class="card f ai g3 mb2 w100" onclick="go(\'#/notifications\')"><div class="rounded-full" style="width:38px;height:38px;background:rgba(108,60,225,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🔔</div><div class="f1" style="text-align:left"><div class="fm t13">Notificacoes</div></div><span class="c-dim">→</span></button>';
   h+='<button class="card f ai g3 w100" onclick="logout()"><div class="rounded-full" style="width:38px;height:38px;background:rgba(255,71,87,.15);display:flex;align-items:center;justify-content:center;font-size:18px">🚪</div><div class="f1" style="text-align:left"><div class="c-danger fm t13">Sair</div></div></button>';
-  h+='<p class="c-dim t11 tc mt6">Glow v1.0.0</p><div style="height:20px"></div></div>'+bottomNav();return h
-}
-
-function openEditProfile(){var p=S.profile||{};document.body.insertAdjacentHTML("beforeend",'<div class="ov"><div class="sheet"><div class="sh-h"></div><h2 class="t22 fb mb4">Editar Perfil</h2><div class="fg"><label class="fl">Nome</label><input class="fi" id="ep-name" value="'+esc(p.name||"")+'"></div><div class="fg"><label class="fl">Bio</label><textarea class="fi" id="ep-bio" rows="2">'+esc(p.bio||"")+'</textarea></div><div class="grid2"><div class="fg"><label class="fl">Cidade</label><input class="fi" id="ep-city" value="'+esc(p.city||"")+'"></div><div class="fg"><label class="fl">UF</label><input class="fi" id="ep-state" value="'+esc(p.state||"")+'" maxlength="2"></div></div><div class="f g3"><button class="btn btn-sec" onclick="this.closest(\'.ov\').remove()">Cancelar</button><button class="btn btn-pri" onclick="doSaveEdit(this)">Salvar</button></div></div></div>')}
-function doSaveEdit(btn){btn.textContent="Salvando...";btn.disabled=true;saveProfile({name:((document.getElementById("ep-name")||{}).value)||"",bio:((document.getElementById("ep-bio")||{}).value)||"",city:((document.getElementById("ep-city")||{}).value)||"",state:((document.getElementById("ep-state")||{}).value)||""}).then(function(){var ov=document.querySelector(".ov");if(ov)ov.remove();toast("Perfil salvo!");render()})}
-
-function renderMyPosts(){return topBar("Meus Posts")+'<div class="page" id="pg-myposts"><div class="skel" style="height:200px"></div></div>'+bottomNav()}
-function loadMyPosts(){
-  fetchMyPosts().then(function(posts){var pg=document.getElementById("pg-myposts");if(!pg)return;
-    if(posts.length===0){pg.innerHTML='<div class="tc" style="padding:60px 0"><div style="font-size:48px">📝</div><h3 class="t18 fb mt3">Nenhum post ainda</h3><button class="btn btn-pri mt4" onclick="go(\'#/\')">Ver Campanhas</button></div>';return}
-    var h="";posts.forEach(function(p){var sm={approved:{i:"✅",l:"Aprovado",c:"b-ok"},rejected:{i:"❌",l:"Rejeitado",c:"b-danger"},pending:{i:"⏳",l:"Pendente",c:"b-warn"}};var st=sm[p.status]||sm.pending;
-      h+='<div class="card mb3"><div class="f ai jb mb2"><div class="f1"><div class="fs t13">'+esc((p.campaigns&&p.campaigns.title)||"Campanha")+'</div><div class="c-dim t11">'+dateBR(p.created_at)+'</div></div><span class="badge '+st.c+'">'+st.i+" "+st.l+'</span></div>';
-      if(p.screenshot_url)h+='<img src="'+esc(p.screenshot_url)+'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px">';
-      if(p.status==="approved")h+='<div class="f jb ai"><span class="c-ok fb">'+money(p.earnings)+'</span></div>';h+='</div>'});
-    h+='<div style="height:20px"></div>';pg.innerHTML=h
-  })
-}
-
-function renderNotifications(){return topBar("Notificacoes")+'<div class="page" id="pg-notif"><div class="skel" style="height:200px"></div></div>'+bottomNav()}
-function loadNotif(){
-  fetchNotifications().then(function(notifs){var pg=document.getElementById("pg-notif");if(!pg)return;
-    var ti={welcome:"🌟",new_campaign:"📢",post_approved:"✅",post_rejected:"❌",new_submission:"📝",info:"⚙️"};var unread=notifs.filter(function(n){return!n.is_read}).length;var h="";
-    if(unread>0)h+='<button class="t13 c-pri mb3" onclick="markAllRead()" style="background:none">Marcar todas ('+unread+')</button>';
-    h+='<div class="f fc g2">';if(notifs.length===0){h+='<div class="tc" style="padding:60px 0"><div style="font-size:48px">🔔</div><h3 class="t18 fb mt3">Sem notificacoes</h3></div>'}
-    else{notifs.forEach(function(n){h+='<div class="notif'+(n.is_read?"":" unread")+'" onclick="markRead(\''+n.id+'\')"><div style="font-size:22px">'+(ti[n.type]||"🔔")+'</div><div class="f1"><div class="f jb"><div class="fm t13'+(n.is_read?" c-dim":"")+'">'+esc(n.title)+'</div>'+(n.is_read?"":'<div class="notif-dot"></div>')+'</div><p class="c-dim t11 mt1">'+esc(n.message)+'</p><p class="c-dim t11 mt1" style="opacity:.6">'+dtBR(n.created_at)+'</p></div></div>'})}
-    h+='</div><div style="height:20px"></div>';pg.innerHTML=h
-  })
+  h+='<p class="c-dim t11 tc mt6">Glow v1.0.0</p><div style="height:20px"></div></div>';
+  return h+bottomNav()
 }
 function markRead(id){sb.from("notifications").update({is_read:true}).eq("id",id).then(function(){loadNotif()})}
 function markAllRead(){sb.from("notifications").update({is_read:true}).eq("user_id",S.user.id).then(function(){loadNotif()})}
@@ -479,14 +494,24 @@ function render(){var app=document.getElementById("app");var hash=location.hash|
   if(hash==="#/login"){app.innerHTML=renderLogin()}else{renderRoute(hash)}
 }
 
+// ❌ REMOVA ESTA LINHA:
+// if(isAdmin&&(hash==="#/"||hash==="")){location.hash="#/admin";return}
+
+// ✅ Agora o admin pode ir para qualquer página
 function renderRoute(hash){
-  var app=document.getElementById("app");var isAdmin=S.profile&&S.profile.role==="admin";
-  if(isAdmin&&(hash==="#/"||hash==="")){location.hash="#/admin";return}
+  var app=document.getElementById("app");
+
+  // Vai direto para a rota solicitada
   if(hash==="#/"||hash===""){
     app.innerHTML=renderFeed();
-    fetchCampaigns().then(function(list){var c=document.getElementById("list-campaigns");if(!c)return;c.innerHTML=list.length?list.map(campaignCard).join(""):'<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>'});
-    var si=document.getElementById("in-search");if(si){var st2;si.addEventListener("input",function(){clearTimeout(st2);st2=setTimeout(function(){fetchCampaigns(si.value).then(function(list){var c=document.getElementById("list-campaigns");if(c)c.innerHTML=list.length?list.map(campaignCard).join(""):'<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>'})},300)})}
-  }else if(hash.indexOf("#/campaign/")===0){var id=hash.split("/")[2];app.innerHTML=renderCampaignPage(id);loadCampaign(id)}
+    fetchCampaigns().then(function(list){
+      var c=document.getElementById("list-campaigns");if(!c)return;
+      c.innerHTML=list.length?list.map(campaignCard).join(""):'<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>'
+    });
+    var si=document.getElementById("in-search");
+    if(si){var st2;si.addEventListener("input",function(){clearTimeout(st2);st2=setTimeout(function(){fetchCampaigns(si.value).then(function(list){var c=document.getElementById("list-campaigns");if(c)c.innerHTML=list.length?list.map(campaignCard).join(""):'<div class="tc" style="padding:40px"><div style="font-size:40px">🔍</div><p class="c-dim t13 mt2">Nenhuma campanha</p></div>'})},300)})}
+  }
+  else if(hash.indexOf("#/campaign/")===0){var id=hash.split("/")[2];app.innerHTML=renderCampaignPage(id);loadCampaign(id)}
   else if(hash==="#/wallet"){app.innerHTML=renderWallet();loadWallet()}
   else if(hash==="#/ranking"){app.innerHTML=renderRanking();loadRanking()}
   else if(hash==="#/profile"){app.innerHTML=renderProfile()}
@@ -498,13 +523,15 @@ function renderRoute(hash){
   else if(hash==="#/merchant/campaigns/new"){app.innerHTML=renderCreateCampaign()}
   else if(hash==="#/merchant/validations"){app.innerHTML=renderValidations();loadValidations()}
   else if(hash==="#/admin"||hash==="#/admin/users"||hash==="#/admin/campaigns"||hash==="#/admin/posts"||hash==="#/admin/finance"||hash==="#/admin/settings"){
-    app.innerHTML='<div class="page"><div class="card-glow mb4"><h2 class="t22 fb">🛡️ Painel Admin</h2><p class="t13 mt1" style="opacity:.8">Area em desenvolvimento</p></div><div class="f fc g2"><button class="btn btn-pri" onclick="go(\'#/admin/users\')">👥 Usuarios</button><button class="btn btn-sec" onclick="go(\'#/admin/campaigns\')">📢 Campanhas</button><button class="btn btn-sec" onclick="go(\'#/admin/posts\')">📝 Posts</button><button class="btn btn-sec" onclick="go(\'#/admin/finance\')">💰 Financeiro</button><button class="btn btn-sec" onclick="go(\'#/admin/settings\')">⚙️ Config</button></div><div id="pg-admin-content" class="mt4"></div><div style="height:20px"></div></div>'+bottomNav();
-    if(hash==="#/admin/users"){loadAdminUsers()}
-    else if(hash==="#/admin/posts"){loadAdminPosts()}
-    else if(hash==="#/admin/finance"){loadAdminFinance()}
-    else if(hash==="#/admin/settings"){loadAdminSettings()}
-    else if(hash==="#/admin/campaigns"){loadAdminCampaigns()}
-    else{loadAdmin()}
+    app.innerHTML='<div class="page"><div class="card-glow mb4"><div style="position:relative;z-index:1"><h2 class="t22 fb">🛡️ Painel Admin</h2><p class="t13 mt1" style="opacity:.8">Controle total da plataforma</p></div></div>';
+    app.innerHTML+='<div class="f fw g2 mb4"><button class="btn btn-sec btn-sm" onclick="go(\'#/admin\')">📊 Dashboard</button><button class="btn btn-sec btn-sm" onclick="go(\'#/admin/users\')">👥 Users</button><button class="btn btn-sec btn-sm" onclick="go(\'#/admin/campaigns\')">📢 Campanhas</button><button class="btn btn-sec btn-sm" onclick="go(\'#/admin/posts\')">📝 Posts</button><button class="btn btn-sec btn-sm" onclick="go(\'#/admin/finance\')">💰 Finance</button><button class="btn btn-sec btn-sm" onclick="go(\'#/admin/settings\')">⚙️ Config</button></div>';
+    app.innerHTML+='<div id="pg-admin-content"></div><div style="height:20px"></div></div>'+bottomNav();
+    if(hash==="#/admin/users")loadAdminUsers();
+    else if(hash==="#/admin/posts")loadAdminPosts();
+    else if(hash==="#/admin/finance")loadAdminFinance();
+    else if(hash==="#/admin/settings")loadAdminSettings();
+    else if(hash==="#/admin/campaigns")loadAdminCampaigns();
+    else loadAdmin();
   }
   else{location.hash="#/"}
 }
