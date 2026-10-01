@@ -283,6 +283,62 @@ function renderLogin(){
   h+='</div></div>';
   return h
 }
+function fetchCampaigns(search){
+  var q=sb.from("campaigns").select("*, companies(name,city,logo_url)").eq("status","active").order("created_at",{ascending:false}).limit(30);
+  if(search)q=q.ilike("title","%"+search+"%");
+  return q.then(function(r){return r.data||[]})
+}
+function fetchCampaign(id){
+  return sb.from("campaigns").select("*, companies(name,city,logo_url,description)").eq("id",id).maybeSingle().then(function(r){return r.data})
+}
+function fetchTransactions(){
+  if(!S.user)return Promise.resolve([]);
+  return sb.from("transactions").select("*").eq("user_id",S.user.id).order("created_at",{ascending:false}).limit(50).then(function(r){return r.data||[]})
+}
+function fetchRanking(){
+  return sb.from("posts").select("user_id,earnings,profiles(name,avatar_url,city,is_verified)").eq("status","approved").then(function(r){
+    var m={};(r.data||[]).forEach(function(p){
+      if(!m[p.user_id])m[p.user_id]={id:p.user_id,name:(p.profiles&&p.profiles.name)||"Criador",avatar:(p.profiles&&p.profiles.avatar_url)||"",city:(p.profiles&&p.profiles.city)||"",verified:p.profiles&&p.profiles.is_verified,posts:0,earnings:0};
+      m[p.user_id].posts++;m[p.user_id].earnings+=Number(p.earnings)||0
+    });
+    return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return b.earnings-a.earnings})
+  })
+}
+function fetchNotifications(){
+  if(!S.user)return Promise.resolve([]);
+  return sb.from("notifications").select("*").eq("user_id",S.user.id).order("created_at",{ascending:false}).limit(50).then(function(r){return r.data||[]})
+}
+function fetchMyCompany(){
+  if(!S.user)return Promise.resolve(null);
+  return sb.from("companies").select("*").eq("owner_id",S.user.id).maybeSingle().then(function(r){return r.data})
+}
+function fetchMerchantCampaigns(){
+  return fetchMyCompany().then(function(c){
+    if(!c)return{company:null,campaigns:[]};
+    return sb.from("campaigns").select("*").eq("company_id",c.id).order("created_at",{ascending:false}).then(function(r){return{company:c,campaigns:r.data||[]}})
+  })
+}
+function fetchPendingPosts(cid){
+  return sb.from("posts").select("*, profiles(name,avatar_url)").eq("campaign_id",cid).eq("status","pending").order("created_at").then(function(r){return r.data||[]})
+}
+function getBalance(){
+  if(!S.user)return Promise.resolve(0);
+  return sb.from("transactions").select("type,amount").eq("user_id",S.user.id).eq("status","completed").then(function(r){
+    return(r.data||[]).reduce(function(a,t){var amt=Number(t.amount)||0;return["earning","bonus","commission"].indexOf(t.type)>=0?a+amt:a-amt},0)
+  })
+}
+function fetchMyPosts(){
+  if(!S.user)return Promise.resolve([]);
+  return sb.from("posts").select("*, campaigns(title,per_post_value,companies(name))").eq("user_id",S.user.id).order("created_at",{ascending:false}).then(function(r){return r.data||[]})
+}
+function uploadFile(file,bucket){
+  var ext=(file.name||"f").split(".").pop();
+  var path=Date.now()+"_"+Math.random().toString(36).slice(2,8)+"."+ext;
+  return sb.storage.from(bucket).upload(path,file,{cacheControl:"3600"}).then(function(r){
+    if(r.error)throw r.error;
+    return sb.storage.from(bucket).getPublicUrl(r.data.path).data.publicUrl
+  })
+}	
 function renderFeed(){
   var name=(S.profile&&S.profile.name?S.profile.name.split(" ")[0]:"Criador");
   var h=topBar("")+'<div class="page">';
