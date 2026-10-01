@@ -137,7 +137,10 @@ function loadSession(){
     return null
   })
 }
-function fetchProfile(){if(!S.user)return Promise.resolve(null);return sb.from("profiles").select("*").eq("id",S.user.id).single().then(function(r){S.profile=r.data||null;return S.profile})}
+function fetchProfile(){
+  if(!S.user)return Promise.resolve(null);
+  return sb.from("profiles").select("*").eq("id",S.user.id).maybeSingle().then(function(r){S.profile=r.data||null;return S.profile})
+}
 function saveProfile(u){if(!S.user)return Promise.resolve();return sb.from("profiles").upsert(Object.assign({id:S.user.id},u)).then(function(r){if(r.error){toast(r.error.message,"err");return}return fetchProfile()})}
 function logout(){return sb.auth.signOut().then(function(){S.user=null;S.profile=null;S.step=1;location.hash="#/login";render()})}
 function loginGoogle(){sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}})}
@@ -175,10 +178,15 @@ function handleComplete(){
   })
 }
 
-function fetchCampaigns(search){
-  var q=sb.from("campaigns").select("*, companies(name,city,logo_url)").eq("status","active").order("created_at",{ascending:false}).limit(30);
-  if(search)q=q.ilike("title","%"+search+"%");
-  return q.then(function(r){return r.data||[]})
+// ❌ ANTES (causa erro 406 quando não encontra resultado)
+function fetchCampaign(id){
+  return sb.from("campaigns").select("*, companies(name,city,logo_url,description)").eq("id",id).maybeSingle().then(function(r){return r.data})
+}
+
+// ✅ DEPOIS (retorna null sem erro quando não encontra)
+function fetchMyCompany(){
+  if(!S.user)return Promise.resolve(null);
+  return sb.from("companies").select("*").eq("owner_id",S.user.id).maybeSingle().then(function(r){return r.data})
 }
 function fetchCampaign(id){return sb.from("campaigns").select("*, companies(name,city,logo_url,description)").eq("id",id).single().then(function(r){return r.data})}
 function fetchTransactions(){if(!S.user)return Promise.resolve([]);return sb.from("transactions").select("*").eq("user_id",S.user.id).order("created_at",{ascending:false}).limit(50).then(function(r){return r.data||[]})}
@@ -296,7 +304,9 @@ function loadCampaign(id){
     if(!c){toast("Campanha nao encontrada","err");go("#/");return}
     var comp=c.companies||{};var media=c.media_urls||[];var tab=S.campaignTab;
     var pg=document.getElementById("pg-campaign");if(!pg)return;
-    var myPostP=S.user?sb.from("posts").select("*").eq("campaign_id",id).eq("user_id",S.user.id).single().then(function(r){return r.data}):Promise.resolve(null);
+    var myPostP=S.user
+  ? sb.from("posts").select("*").eq("campaign_id",id).eq("user_id",S.user.id).maybeSingle().then(function(r){return r.data})
+  : Promise.resolve(null);
     myPostP.then(function(mp){
       var tc="";
       if(tab==="details"){
